@@ -1,11 +1,11 @@
-"""Trainer: Muon (2D block matrices) + AdamW (embeddings/norms), linear
-warmup -> cosine decay LR, global gradient-norm clipping. Same hard caps
-as baseline (2,000 steps, 2,000,000 params, train_corpus.txt only).
+"""Train the small multilingual Transformer.
 
-    python train.py --data ../data/train_corpus.txt --steps 2000 --out ckpt.pt
+Uses Muon + AdamW or plain Adam, with linear warmup, cosine decay,
+global gradient clipping, and the project's 2,000-step / 2M-parameter caps.
 """
 import argparse
 import math
+import os
 import time
 
 import torch
@@ -19,7 +19,11 @@ MAX_PARAMS = 2_000_000
 
 
 def get_batch(ids, block, batch, device):
-    ix = torch.randint(len(ids) - block - 1, (batch,))
+    if len(ids) <= block:
+        raise ValueError(
+            f"training corpus is too short: need more than {block} tokens, "
+            f"got {len(ids)}")
+    ix = torch.randint(len(ids) - block, (batch,))
     x = torch.stack([ids[i:i + block] for i in ix])
     y = torch.stack([ids[i + 1:i + 1 + block] for i in ix])
     return x.to(device), y.to(device)
@@ -56,15 +60,24 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=0.0)
     ap.add_argument("--optimizer", default="muon_adamw",
                      choices=["muon_adamw", "adam_all"],
-                     help="adam_all = plain Adam over every param, same "
-                          "LR schedule -- isolates Muon's contribution.")
+                     help="adam_all = plain Adam over every param, same LR schedule")
     ap.add_argument("--tokenizer_model", default=None)
     args = ap.parse_args()
-    assert args.steps <= MAX_STEPS, f"cap: max {MAX_STEPS} steps"
+
+    if not 1 <= args.steps <= MAX_STEPS:
+        raise ValueError(f"steps must be between 1 and {MAX_STEPS}")
+    if args.batch < 1:
+        raise ValueError("batch must be >= 1")
+    if args.warmup_steps < 0:
+        raise ValueError("warmup_steps must be >= 0")
+    if args.min_lr_ratio < 0:
+        raise ValueError("min_lr_ratio must be >= 0")
+
     torch.manual_seed(args.seed)
     device = "cpu"
 
-    text = open(args.data, encoding="utf-8").read()
+    with open(args.data, encoding="utf-8") as f:
+        text = f.read()
     tok = tokenizer_mod.load(args.tokenizer_model)
     ids = torch.tensor(tok.encode(text), dtype=torch.long)
     print(f"corpus: {len(text.encode('utf-8')):,} bytes -> {len(ids):,} tokens "
@@ -81,8 +94,10 @@ def main():
     model = GPT(cfg).to(device)
     n = model.n_params()
     print(f"model: {n:,} params  (cap {MAX_PARAMS:,})")
-    assert n <= MAX_PARAMS, (
-        f"cap: max {MAX_PARAMS:,} params -- shrink n_embd/vocab_size/n_layer")
+    if n > MAX_PARAMS:
+        raise ValueError(
+            f"model has {n:,} params; cap is {MAX_PARAMS:,} -- "
+            "shrink n_embd/vocab_size/n_layer")
 
     muon_group = list(model.muon_params())
     adamw_group = list(model.adamw_params())
@@ -97,9 +112,9 @@ def main():
                                        weight_decay=args.weight_decay,
                                        betas=(0.9, 0.95))
         optimizers = [muon_opt, adamw_opt]
-    else:  # adam_all -- ablation: same schedule, plain Adam everywhere
+    else:
         adam_opt = torch.optim.Adam(model.parameters(), lr=args.adamw_lr,
-                                     betas=(0.9, 0.95))
+                                    betas=(0.9, 0.95))
         optimizers = [adam_opt]
 
     model.train()
@@ -128,7 +143,7 @@ def main():
         s = step + 1
         if s % args.log_every == 0 or s == 1:
             avg = sum(losses[-args.log_every:]) / len(losses[-args.log_every:])
-            cur_lr = optimizers[-1].param_groups[0]['lr']
+            cur_lr = optimizers[-1].param_groups[0]["lr"]
             print(f"step {s:5d}  loss {avg:.4f}  lr {cur_lr:.2e}  "
                   f"({(time.time()-t0)/s*1000:.0f} ms/step)")
 
@@ -137,6 +152,9 @@ def main():
                            if not k.startswith("_")
                            and not callable(getattr(cfg, k))},
                 "steps": args.steps,
+                "seed": args.seed,
+                "tokenizer_model": os.path.basename(tok.model_path)
+                if hasattr(tok, "model_path") else None,
                 "train_loss_curve": losses}, args.out)
     print(f"saved {args.out}  ({time.time()-t0:.0f}s total)")
 
