@@ -1,7 +1,7 @@
 """Small command-line text generator.
 
 Usage:
-    python generate.py --checkpoint ckpt.pt --prompt "भारत एक"
+    python generate.py --checkpoint ckpt.pt --prompt "भारत एक" --seed 42
 """
 import argparse
 
@@ -49,7 +49,12 @@ def main():
     parser.add_argument("--max_new_tokens", type=int, default=80)
     parser.add_argument("--temperature", type=float, default=0.8)
     parser.add_argument("--top_k", type=int, default=40)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="random seed for reproducible generation")
     args = parser.parse_args()
+
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
 
     model, tok = load_model(args.checkpoint)
     print(generate(model, tok, args.prompt, args.max_new_tokens, args.temperature, args.top_k))
