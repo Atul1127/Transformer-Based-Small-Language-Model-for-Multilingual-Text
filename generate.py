@@ -68,7 +68,9 @@ def generate(model, tok, prompt, max_new_tokens=80, temperature=0.8, top_k=40):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate text with the small multilingual Transformer")
+    parser = argparse.ArgumentParser(
+        description="Generate text with the small multilingual Transformer"
+    )
     parser.add_argument("--checkpoint", default="ckpt.pt")
     parser.add_argument("--prompt", required=True)
     parser.add_argument("--max_new_tokens", type=int, default=80)
@@ -82,7 +84,23 @@ def main():
         torch.manual_seed(args.seed)
 
     model, tok = load_model(args.checkpoint)
-    print(generate(model, tok, args.prompt, args.max_new_tokens, args.temperature, args.top_k))
+    output = generate(
+        model, tok, args.prompt, args.max_new_tokens, args.temperature, args.top_k
+    )
+
+    print("=" * 60)
+    print("Small Multilingual Language Model")
+    print("=" * 60)
+    print(f"Prompt      : {args.prompt}")
+    print(f"Temperature : {args.temperature}")
+    print(f"Top-k       : {args.top_k}")
+    print(f"Max tokens  : {args.max_new_tokens}")
+    if args.seed is not None:
+        print(f"Seed        : {args.seed}")
+    print("-" * 60)
+    print("Generated:")
+    print(output)
+    print("=" * 60)
 
 
 if __name__ == "__main__":
