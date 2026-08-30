@@ -43,6 +43,12 @@ Train from scratch (requires your training corpus):
 python train.py --data ../data/train_corpus.txt --steps 2000 --batch 8 --optimizer adam_all --out ckpt.pt
 ```
 
+Run the basic tests:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 ## Architecture
 
 ```text
@@ -76,7 +82,7 @@ RMSNorm → vocabulary logits
 | FFN | SwiGLU |
 | Weight tying | Yes |
 
-The training code keeps the original **2,000-step** and **2M-parameter** constraints. fileciteturn3file0
+The training code keeps the original **2,000-step** and **2M-parameter** constraints.
 
 ## Results
 
@@ -86,11 +92,11 @@ The training code keeps the original **2,000-step** and **2M-parameter** constra
 | Final model | **1.7067** |
 | Muon + AdamW ablation | 1.7210 |
 
-Lower bpb is better. The final run was selected because plain Adam scored better than the recorded Muon + AdamW ablation at roughly equal wall time. fileciteturn5file0
+Lower bpb is better. The final run was selected because plain Adam scored better than the recorded Muon + AdamW ablation at roughly equal wall time.
 
 ## Evaluation
 
-The project uses **bits per byte (bpb)** rather than bits per token, avoiding direct dependence on tokenizer sequence length. The evaluator also checks tokenizer round-trip correctness and uses a sliding context window. fileciteturn6file0
+The project uses **bits per byte (bpb)** rather than bits per token, avoiding direct dependence on tokenizer sequence length. The evaluator also checks tokenizer round-trip correctness and uses a sliding context window.
 
 ## Repository Structure
 
@@ -106,6 +112,7 @@ The project uses **bits per byte (bpb)** rather than bits per token, avoiding di
 ├── tok_v8192.vocab   # Vocabulary
 ├── data/
 │   └── sample_eval.txt # Small smoke-test evaluation file
+├── tests/            # Basic model/tokenizer tests
 ├── NOTES.md          # Design decisions
 ├── RUNLOG.md         # Experiment log
 ├── SUMMARY.html      # Project summary
@@ -115,7 +122,7 @@ The project uses **bits per byte (bpb)** rather than bits per token, avoiding di
 
 ## Design Choices
 
-The model uses RoPE, RMSNorm, SwiGLU, tied embeddings, and a lossless Unigram tokenizer while staying below the 2M-parameter budget. The tokenizer and architecture changes were evaluated under the project's fixed training constraints. fileciteturn5file0
+The model uses RoPE, RMSNorm, SwiGLU, tied embeddings, and a lossless Unigram tokenizer while staying below the 2M-parameter budget. The tokenizer and architecture changes were evaluated under the project's fixed training constraints.
 
 ## Author
 
