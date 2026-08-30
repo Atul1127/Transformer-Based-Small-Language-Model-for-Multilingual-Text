@@ -4,6 +4,7 @@ Usage:
     python generate.py --checkpoint ckpt.pt --prompt "भारत एक" --seed 42
 """
 import argparse
+import os
 
 import torch
 
@@ -19,17 +20,41 @@ def load_model(checkpoint):
     model = GPT(cfg)
     model.load_state_dict(ckpt["model"])
     model.eval()
-    return model, tokenizer_mod.load()
+
+    name = ckpt.get("tokenizer_model")
+    if name:
+        path = name if os.path.isabs(name) else os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), name)
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"checkpoint expects tokenizer '{name}', but it was not found at {path}")
+        tok = tokenizer_mod.load(path)
+    else:
+        tok = tokenizer_mod.load()
+    if tok.vocab_size != cfg.vocab_size:
+        raise ValueError(
+            f"tokenizer/model vocab mismatch: tokenizer={tok.vocab_size}, "
+            f"checkpoint={cfg.vocab_size}")
+    return model, tok
 
 
 @torch.no_grad()
 def generate(model, tok, prompt, max_new_tokens=80, temperature=0.8, top_k=40):
+    if max_new_tokens < 0:
+        raise ValueError("max_new_tokens must be >= 0")
+    if temperature <= 0:
+        raise ValueError("temperature must be > 0")
+    if top_k < 0:
+        raise ValueError("top_k must be >= 0")
+
     ids = torch.tensor([tok.encode(prompt)], dtype=torch.long)
+    if ids.size(1) == 0:
+        raise ValueError("prompt must contain at least one encodable token")
 
     for _ in range(max_new_tokens):
         context = ids[:, -model.cfg.block_size:]
         logits, _ = model(context)
-        logits = logits[:, -1, :] / max(temperature, 1e-6)
+        logits = logits[:, -1, :] / temperature
 
         if top_k > 0:
             values, _ = torch.topk(logits, min(top_k, logits.size(-1)))
