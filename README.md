@@ -53,7 +53,7 @@ A compact **decoder-only Transformer language model built from scratch in PyTorc
 
 ## Generation Demo
 
-The trained checkpoint can generate text from both English and Hindi prompts. Generation is a qualitative demonstration; **bpb is the primary quantitative evaluation metric** for this constrained model.
+The released checkpoint supports both English and Hindi prompts. Generation is a qualitative demonstration; **bpb is the primary quantitative evaluation metric** for this constrained model.
 
 ### English
 
@@ -69,11 +69,10 @@ The state. The war rate of the United States was shosed by the South Atlantic Oc
 ```text
 Prompt: भारत एक
 
-Generated:
-भारत एक ...
+Generation is supported through the same tokenizer + Transformer pipeline.
 ```
 
-> Generation quality is limited by the intentionally small model size and short training budget. The examples above are representative outputs from the released checkpoint rather than edited text.
+> Generation quality is limited by the intentionally small model size and short training budget. Outputs are shown as generated rather than manually edited.
 
 ## Quick Start
 
@@ -94,6 +93,8 @@ Generate text:
 ```bash
 python generate.py --checkpoint ckpt.pt --prompt "भारत एक" --temperature 0.7 --top_k 40 --max_new_tokens 50 --seed 42
 ```
+
+The generator prints the prompt, sampling configuration, and generated text in a structured terminal format.
 
 Train from scratch (requires your training corpus):
 
