@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="760" viewBox="0 0 900 760">
+  <rect width="900" height="760" fill="#ffffff"/>
+  <text x="450" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#111111">Small Multilingual Transformer</text>
+  <text x="450" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#555555">1.83M parameters · 4 layers · 4 heads · 128-dimensional embeddings</text>
+
+  <rect x="250" y="105" width="400" height="58" rx="10" fill="#f4f4f4" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="140" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Input Text</text>
+
+  <line x1="450" y1="163" x2="450" y2="195" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="200" y="195" width="500" height="65" rx="10" fill="#f4f4f4" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="222" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="bold">SentencePiece Unigram Tokenizer</text>
+  <text x="450" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="14">8,192 vocabulary · byte fallback · lossless round-trip</text>
+
+  <line x1="450" y1="260" x2="450" y2="292" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="250" y="292" width="400" height="58" rx="10" fill="#f4f4f4" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="327" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Token Embeddings</text>
+
+  <line x1="450" y1="350" x2="450" y2="382" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="120" y="382" width="660" height="175" rx="12" fill="#fafafa" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="412" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold">× 4 Transformer Blocks</text>
+  <text x="170" y="447" font-family="Arial, sans-serif" font-size="16">1. RMSNorm</text>
+  <text x="170" y="477" font-family="Arial, sans-serif" font-size="16">2. Causal Self-Attention + RoPE</text>
+  <text x="170" y="507" font-family="Arial, sans-serif" font-size="16">3. Residual Connection</text>
+  <text x="520" y="447" font-family="Arial, sans-serif" font-size="16">4. RMSNorm</text>
+  <text x="520" y="477" font-family="Arial, sans-serif" font-size="16">5. SwiGLU MLP</text>
+  <text x="520" y="507" font-family="Arial, sans-serif" font-size="16">6. Residual Connection</text>
+  <text x="450" y="540" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#555555">256-token context · 4 attention heads · 32 dimensions/head</text>
+
+  <line x1="450" y1="557" x2="450" y2="589" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="250" y="589" width="400" height="58" rx="10" fill="#f4f4f4" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="624" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Final RMSNorm</text>
+
+  <line x1="450" y1="647" x2="450" y2="679" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="200" y="679" width="500" height="58" rx="10" fill="#f4f4f4" stroke="#222222" stroke-width="2"/>
+  <text x="450" y="714" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Tied LM Head → Vocabulary Logits</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333333"/>
+    </marker>
+  </defs>
+</svg>
