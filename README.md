@@ -23,19 +23,21 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Evaluate the included checkpoint:
+Run the included smoke evaluation:
 
 ```bash
-python evaluate.py --checkpoint ckpt.pt --text_file ../data/dev_eval.txt
+python evaluate.py --checkpoint ckpt.pt --text_file data/sample_eval.txt
 ```
+
+> `data/sample_eval.txt` is a small smoke-test file included in this repository. Its bpb is **not** the reported development-set result above.
 
 Generate text from a prompt:
 
 ```bash
-python generate.py --checkpoint ckpt.pt --prompt "भारत एक"
+python generate.py --checkpoint ckpt.pt --prompt "भारत एक" --seed 42
 ```
 
-Train from scratch:
+Train from scratch (requires your training corpus):
 
 ```bash
 python train.py --data ../data/train_corpus.txt --steps 2000 --batch 8 --optimizer adam_all --out ckpt.pt
@@ -102,6 +104,8 @@ The project uses **bits per byte (bpb)** rather than bits per token, avoiding di
 ├── ckpt.pt           # Model checkpoint
 ├── tok_v8192.model   # SentencePiece model
 ├── tok_v8192.vocab   # Vocabulary
+├── data/
+│   └── sample_eval.txt # Small smoke-test evaluation file
 ├── NOTES.md          # Design decisions
 ├── RUNLOG.md         # Experiment log
 ├── SUMMARY.html      # Project summary
