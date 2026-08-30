@@ -1,0 +1,5 @@
+India is a diverse country with many languages and cultures.
+भारत एक विविध देश है जहाँ कई भाषाएँ और संस्कृतियाँ हैं।
+বাংলা ভাষা ভারতের একটি গুরুত্বপূর্ণ ভাষা।
+தமிழ் இந்தியாவின் பழமையான மொழிகளில் ஒன்றாகும்.
+This is a small multilingual language-model evaluation example.
