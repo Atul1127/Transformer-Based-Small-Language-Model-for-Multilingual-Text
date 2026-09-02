@@ -1,0 +1,2 @@
+# Install requirements.txt first.
+gradio>=5,<7
