@@ -2,7 +2,7 @@
 
 A **1.83M-parameter decoder-only Transformer built from scratch in PyTorch** for multilingual language modeling under a strict compute budget.
 
-The project focuses on a practical question: **how much language-modeling efficiency can be obtained from a tiny model through architecture and tokenizer choices?**
+The project asks: **how much language-modeling efficiency can a tiny model obtain from careful architecture, tokenization, and optimization choices?**
 
 > **Best recorded result:** **1.7067 bits/byte (bpb)** on the development evaluation, versus **2.3718 bpb** for the byte-tokenizer baseline — a **28.0% relative improvement**.
 
@@ -44,13 +44,13 @@ This is not intended to compete with production LLMs. The model was deliberately
 | Tokenizer | SentencePiece Unigram |
 | Vocabulary | 8,192 + byte fallback |
 
-The implementation is intentionally dependency-light: the Transformer itself is implemented directly with PyTorch modules and scaled-dot-product attention rather than using a pretrained Transformer stack.
+The Transformer is implemented directly with PyTorch modules rather than relying on a pretrained Transformer stack.
 
 ## Tokenization
 
 The tokenizer uses **SentencePiece Unigram with byte fallback**. This provides compact subword representations while retaining a lossless path for arbitrary UTF-8 text.
 
-The evaluator explicitly verifies:
+The evaluator verifies:
 
 ```text
 text -> encode -> decode == original text
@@ -62,7 +62,7 @@ A raw byte tokenizer is also available as a fallback when no trained SentencePie
 
 ## Training
 
-The training loop supports two optimization configurations:
+The training loop supports:
 
 1. **Adam** over all parameters
 2. **Muon + AdamW** split between Transformer matrices and remaining parameters
@@ -72,10 +72,11 @@ Training also includes:
 - linear learning-rate warmup
 - cosine learning-rate decay
 - global gradient clipping
-- deterministic seed configuration
+- configurable random seed
 - configurable model dimensions
 - explicit 2M-parameter guard
 - checkpoint metadata containing model configuration and tokenizer identity
+- saved training loss curve
 
 Example:
 
@@ -109,7 +110,7 @@ python evaluate_languages.py \
   --hindi data/sample_eval_hindi.txt
 ```
 
-This produces machine-readable JSON so language-level results can be recorded without changing the underlying evaluation function.
+The utility reuses the same bpb implementation and emits machine-readable JSON, making it suitable for transparent per-language reporting.
 
 ### Reported development result
 
@@ -142,9 +143,9 @@ The demo exposes temperature, top-k, maximum generation length, and seed control
 
 ## Generation examples
 
-Generation is qualitative only; **bpb remains the primary quantitative metric**.
+Generation is qualitative only; **bpb remains the primary quantitative metric**. The examples below are intentionally raw model output rather than manually polished text.
 
-### English
+### English — recorded generation
 
 ```text
 Prompt: The state
@@ -156,25 +157,9 @@ Generated:
 The state. The war rate of the United States was shosed by the South Atlantic Ocean, and the U.S. U.S. Constitution in the Atlantic Ocean, and the western North Sea.
 ```
 
-### Hindi
+### Hindi / multilingual inference
 
-```text
-Prompt: भारत एक
-Temperature: 0.7
-Top-k: 40
-Seed: 42
-
-Generated:
-See the released checkpoint and run generate.py or app.py for a raw Hindi generation.
-```
-
-These outputs are shown as model generations rather than manually edited examples. Their imperfect coherence is expected from the deliberately tiny model and short CPU training budget.
-
-## Reproducibility
-
-The released checkpoint stores the model configuration, training-step count, random seed, tokenizer filename, and training loss curve.
-
-To reproduce inference with a fixed sampling seed:
+The released checkpoint accepts UTF-8 Hindi prompts through the same tokenizer and Transformer pipeline. To reproduce a Hindi generation locally:
 
 ```bash
 python generate.py \
@@ -186,11 +171,25 @@ python generate.py \
   --seed 42
 ```
 
-Run the test suite:
+The interactive `app.py` demo provides the same controls without requiring a terminal command.
+
+## Reproducibility
+
+The released checkpoint stores the model configuration, training-step count, random seed, tokenizer filename, and training loss curve.
+
+For deterministic sampling, fix the seed:
+
+```bash
+python generate.py --checkpoint ckpt.pt --prompt "भारत एक" --temperature 0.7 --top_k 40 --max_new_tokens 50 --seed 42
+```
+
+Run the tests:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+The test suite covers model forward/loss behavior, the parameter budget, context-length enforcement, and lossless UTF-8 byte-tokenizer round trips.
 
 For a clean environment:
 
@@ -203,12 +202,21 @@ pip install -r requirements.txt
 
 ## Experiments
 
-The experimental progression is documented in [`RUNLOG.md`](RUNLOG.md).
+The full experimental progression is documented in [`RUNLOG.md`](RUNLOG.md).
 
-The main design decisions were:
+| Change | Evidence / role |
+|---|---|
+| Byte tokenizer → Unigram | 2.3718 → 1.9326 bpb reference improvement |
+| RoPE + RMSNorm + SwiGLU + scaled residual init | Higher-capacity architecture within 2M parameters |
+| Muon + AdamW | 1.7210 bpb ablation |
+| Plain Adam | **1.7067 bpb final checkpoint** |
+
+The Adam-only run was slightly better than the tested Muon + AdamW configuration and had essentially the same wall-clock time. The run log explicitly records that this is a limited optimizer comparison rather than a tuned optimizer sweep.
+
+### Design rationale
 
 - **RoPE:** positional information without learned position embeddings.
-- **RMSNorm:** lightweight normalization in the pre-norm Transformer blocks.
+- **RMSNorm:** lightweight normalization in pre-norm Transformer blocks.
 - **SwiGLU:** stronger feed-forward expressiveness within the parameter budget.
 - **Weight tying:** reduces duplicated embedding/output parameters.
 - **Unigram + byte fallback:** improves tokenization efficiency while preserving UTF-8 round trips.
